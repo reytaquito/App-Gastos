@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gastos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FBFBFA; --surface:#FFFFFF;
+    --line:#ECECE9; --line-strong:#DEDEDA;
+    --ink:#17171A; --ink-2:#5C5C63; --ink-3:#93939C;
+    --accent:#4A3AFF; --accent-soft:#EEEBFF; --danger:#C0392B; --ok:#1E7A4C;
+    --r-lg:16px; --r-md:12px; --r-sm:8px;
+    --shadow-1:0 1px 2px rgba(23,23,26,.04), 0 1px 3px rgba(23,23,26,.03);
+    --t:220ms cubic-bezier(.2,.7,.3,1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-serif;
+    background:var(--bg);color:var(--ink);font-size:15px;line-height:1.5;
+    -webkit-font-smoothing:antialiased;padding:48px 24px 96px;
+  }
+  .num{font-variant-numeric:tabular-nums}
+  .wrap{max-width:1080px;margin:0 auto}
+
+  .masthead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:28px;flex-wrap:wrap}
+  .masthead h1{font-size:22px;font-weight:600;letter-spacing:-.02em}
+  .masthead p{color:var(--ink-3);font-size:14px;margin-top:2px}
+
+  .archivo{display:flex;gap:8px}
+  .ghost{
+    display:inline-flex;align-items:center;gap:7px;
+    font-family:inherit;font-size:13px;font-weight:500;color:var(--ink-2);
+    background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-sm);
+    padding:8px 12px;cursor:pointer;transition:background var(--t),border-color var(--t),color var(--t);
+  }
+  .ghost svg{width:15px;height:15px}
+  .ghost:hover{background:#F7F7F5;border-color:#D2D2CE;color:var(--ink)}
+
+  .cols{display:grid;grid-template-columns:392px 1fr;gap:24px;align-items:start}
+  .stack{display:flex;flex-direction:column;gap:24px}
+
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-1)}
+  .panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:20px 24px 4px}
+  .panel-head h2{font-size:14px;font-weight:600;letter-spacing:-.01em}
+  .panel-head .total{font-size:14px;font-weight:600;letter-spacing:-.01em}
+  .panel-head .total span{color:var(--ink-3);font-weight:500;margin-right:8px}
+
+  /* ---------- formulario ---------- */
+  form{padding:24px;display:flex;flex-direction:column;gap:22px}
+  .field-label{display:block;font-size:12px;font-weight:500;color:var(--ink-3);margin-bottom:8px}
+
+  .amount{position:relative;display:flex;align-items:baseline;gap:6px}
+  .amount .sign{font-size:34px;font-weight:600;color:var(--ink-3);letter-spacing:-.03em;line-height:1}
+  .amount input{
+    font-family:inherit;font-size:44px;font-weight:600;letter-spacing:-.035em;line-height:1;
+    border:0;outline:0;background:transparent;color:var(--ink);width:100%;
+    font-variant-numeric:tabular-nums;padding:0;
+  }
+  .amount input::placeholder{color:#D6D6D2}
+  .amount .cur{font-size:13px;font-weight:500;color:var(--ink-3)}
+  .amount-rule{height:1px;background:var(--line-strong);margin-top:14px;position:relative}
+  .amount-rule::after{content:"";position:absolute;inset:0;background:var(--accent);
+    transform:scaleX(0);transform-origin:left;transition:transform var(--t)}
+  .amount:focus-within + .amount-rule::after{transform:scaleX(1)}
+
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{
+    display:inline-flex;align-items:center;gap:7px;
+    padding:8px 12px 8px 10px;border-radius:var(--r-sm);
+    border:1px solid var(--line-strong);background:var(--surface);
+    font-family:inherit;font-size:13px;font-weight:500;color:var(--ink-2);
+    cursor:pointer;transition:background var(--t),border-color var(--t),color var(--t),transform 120ms ease;
+  }
+  .chip svg{width:15px;height:15px;opacity:.7}
+  .chip:hover{background:#F7F7F5;border-color:#D2D2CE}
+  .chip:active{transform:scale(.97)}
+  .chip[aria-pressed="true"]{background:var(--accent-soft);border-color:#CFC7FF;color:var(--accent)}
+  .chip[aria-pressed="true"] svg{opacity:1}
+
+  .row{display:grid;grid-template-columns:150px 1fr;gap:14px}
+  .input{
+    width:100%;font-family:inherit;font-size:14px;color:var(--ink);
+    background:var(--surface);border:1px solid var(--line-strong);
+    border-radius:var(--r-sm);padding:10px 12px;outline:0;
+    transition:border-color var(--t),box-shadow var(--t);
+  }
+  .input::placeholder{color:var(--ink-3)}
+  .input:hover{border-color:#D2D2CE}
+  .input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+
+  .submit{
+    width:100%;font-family:inherit;font-size:14px;font-weight:600;color:#fff;
+    background:var(--ink);border:0;border-radius:var(--r-md);padding:13px 16px;cursor:pointer;
+    transition:background var(--t),transform 120ms ease;
+  }
+  .submit:hover{background:#000}
+  .submit:active{transform:scale(.985)}
+
+  .hint{font-size:12px;color:var(--danger);margin-top:-14px;min-height:16px}
+  .hint.ok{color:var(--ok)}
+
+  /* ---------- filtros ---------- */
+  .filtros{padding:18px 24px 20px;display:flex;flex-direction:column;gap:14px}
+  .filtros-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+  .filtros-head h2{font-size:14px;font-weight:600}
+  .link{
+    font-family:inherit;font-size:12px;font-weight:500;color:var(--ink-3);
+    background:none;border:0;cursor:pointer;padding:2px 0;transition:color var(--t);
+  }
+  .link:hover{color:var(--accent)}
+  .fechas{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .fechas label{font-size:12px;color:var(--ink-3);font-weight:500}
+  .fechas .input{width:auto}
+
+  /* ---------- gráfica ---------- */
+  .grafica{padding:8px 24px 24px;display:flex;flex-direction:column;gap:14px}
+  .barra-fila{display:grid;grid-template-columns:120px 1fr 96px;align-items:center;gap:12px}
+  .barra-fila .et{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2);font-weight:500}
+  .barra-fila .et svg{width:14px;height:14px;opacity:.6;flex:none}
+  .pista{height:26px;background:#F4F4F1;border-radius:var(--r-sm);overflow:hidden}
+  .barra{height:100%;background:var(--accent);border-radius:var(--r-sm);
+    transform-origin:left;transition:width 300ms cubic-bezier(.2,.7,.3,1)}
+  .barra-fila .val{text-align:right;font-size:13px;font-weight:600}
+  .barra-fila .val small{display:block;font-size:11px;color:var(--ink-3);font-weight:500}
+
+  /* ---------- historial ---------- */
+  .list{padding:12px}
+  .item{
+    display:grid;grid-template-columns:34px 1fr auto 32px;align-items:center;gap:12px;
+    padding:11px 12px;border-radius:var(--r-md);transition:background var(--t);
+    animation:enter 260ms cubic-bezier(.2,.7,.3,1);
+  }
+  .item:hover{background:#F8F8F6}
+  @keyframes enter{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+  .ico{width:34px;height:34px;border-radius:10px;background:#F4F4F1;
+    display:flex;align-items:center;justify-content:center;color:var(--ink-2)}
+  .ico svg{width:16px;height:16px}
+  .meta{min-width:0}
+  .meta strong{display:block;font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .meta small{display:block;font-size:12px;color:var(--ink-3);margin-top:1px}
+  .amt{font-size:14px;font-weight:600;letter-spacing:-.01em}
+  .del{
+    width:28px;height:28px;border:0;border-radius:var(--r-sm);background:transparent;color:var(--ink-3);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:.35;
+    transition:opacity var(--t),background var(--t),color var(--t);
+  }
+  .del svg{width:15px;height:15px}
+  .item:hover .del{opacity:1}
+  .del:hover{background:#F6E9E7;color:var(--danger)}
+
+  .empty{padding:48px 24px;text-align:center}
+  .empty p{font-size:14px;color:var(--ink-2)}
+  .empty small{font-size:13px;color:var(--ink-3);display:block;margin-top:4px}
+
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  @media (max-width:880px){
+    body{padding:28px 16px 60px}
+    .cols{grid-template-columns:1fr}
+    .amount input{font-size:38px}
+    .barra-fila{grid-template-columns:110px 1fr 80px}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition-duration:1ms!important;animation-duration:1ms!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div>
+      <h1>Gastos</h1>
+      <p>Registra en qué se te va el dinero.</p>
+    </div>
+    <div class="archivo">
+      <button class="ghost" id="btn-exportar" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 17v3h16v-3"/></svg>
+        Exportar
+      </button>
+      <button class="ghost" id="btn-importar" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M8 7l4-4 4 4"/><path d="M4 17v3h16v-3"/></svg>
+        Importar
+      </button>
+      <input type="file" id="archivo" accept=".json,application/json" hidden>
+    </div>
+  </header>
+
+  <div class="cols">
+
+    <!--Registro -->
+    <section class="panel">
+      <form id="form" autocomplete="off">
+
+        <div>
+          <label class="field-label" for="monto">Monto</label>
+          <div class="amount">
+            <span class="sign">$</span>
+            <input id="monto" type="text" inputmode="decimal" placeholder="0.00" autofocus>
+            <span class="cur">MXN</span>
+          </div>
+          <div class="amount-rule"></div>
+        </div>
+
+        <div>
+          <span class="field-label">Categoría</span>
+          <div class="chips" id="chips-form" role="group" aria-label="Categoría"></div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label class="field-label" for="fecha">Fecha</label>
+            <input id="fecha" class="input num" type="date">
+          </div>
+          <div>
+            <label class="field-label" for="desc">Descripción <span style="color:#C5C5C0">· opcional</span></label>
+            <input id="desc" class="input" type="text" placeholder="Comida con el equipo" maxlength="60">
+          </div>
+        </div>
+
+        <p class="hint" id="hint"></p>
+        <button class="submit" type="submit">Agregar gasto</button>
+      </form>
+    </section>
+
+    <div class="stack">
+
+      <!-- ================= 2. FILTROS ================= -->
+      <section class="panel">
+        <div class="filtros">
+          <div class="filtros-head">
+            <h2>Filtros</h2>
+            <button class="link" id="btn-limpiar" type="button">Limpiar filtros</button>
+          </div>
+          <div class="chips" id="chips-filtro" role="group" aria-label="Filtrar por categoría"></div>
+          <div class="fechas">
+            <label for="desde">Del</label>
+            <input id="desde" class="input num" type="date">
+            <label for="hasta">al</label>
+            <input id="hasta" class="input num" type="date">
+          </div>
+        </div>
+      </section>
+
+      <!-- Grafica-->
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Gastos por categoría</h2>
+          <p class="total num"><span id="contador">0 movimientos</span><b id="total">$0.00</b></p>
+        </div>
+        <div class="grafica" id="grafica"></div>
+      </section>
+
+      <!-- Historial -->
+      <section class="panel">
+        <div class="panel-head"><h2>Historial</h2></div>
+        <div class="list" id="lista"></div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script>
+/*Catálogo de categorías */
+const CATEGORIAS = {
+  comida:          {texto:'Comida',          icono:'<path d="M3 2v7a2 2 0 0 0 2 2 2 2 0 0 0 2-2V2"/><path d="M5 11v11"/><path d="M17 2c-1.6 1-2.5 3-2.5 5.5S15.4 11 17 11v11"/>'},
+  transporte:      {texto:'Transporte',      icono:'<path d="M5 17H3v-5l2-5h14l2 5v5h-2"/><path d="M9 17h6"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/>'},
+  servicios:       {texto:'Servicios',       icono:'<path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/>'},
+  renta:           {texto:'Renta',           icono:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/>'},
+  entretenimiento: {texto:'Entretenimiento', icono:'<circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5-6-3.5z"/>'},
+  salud:           {texto:'Salud',           icono:'<path d="M19.5 5.5a4.7 4.7 0 0 0-7 .3l-.5.5-.5-.5a4.7 4.7 0 1 0-7 6.2l7.5 7.5 7.5-7.5a4.7 4.7 0 0 0 0-6.5z"/>'},
+  otros:           {texto:'Otros',           icono:'<path d="M3 11.5V4a1 1 0 0 1 1-1h7.5L21 12l-9 9-9-9.5z"/><circle cx="7.5" cy="7.5" r="1.4"/>'}
+};
+const BASURA = '<path d="M4 6h16"/><path d="M9 6V4h6v2"/><path d="M6 6l1 14h10l1-14"/><path d="M10 10v7M14 10v7"/>';
+const dibujo = trazo => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' + trazo + '</svg>';
+
+/* Validación con expresiones regulares (punto 3.2) */
+const RE_MONTO = /^\d{1,7}(\.\d{1,2})?$/;                        // 1 a 7 enteros, máximo 2 decimales
+const RE_FECHA = /^\d{4}-\d{2}-\d{2}$/;                          // formato AAAA-MM-DD
+const RE_DESC  = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9 .,#()\-]{0,60}$/;    // letras, números y puntuación básica
+const RE_CAT   = /^(comida|transporte|servicios|renta|entretenimiento|salud|otros)$/;
+
+// quita espacios y comas de miles"
+function limpiarMonto(texto){
+  return texto.trim().replace(/\s/g, '').replace(/,/g, '');
+}
+
+// revisa que la fecha exista de verdad 
+function fechaValida(texto){
+  if (!RE_FECHA.test(texto)) return false;
+  const [a, m, d] = texto.split('-').map(Number);
+  const prueba = new Date(a, m - 1, d);
+  return prueba.getMonth() === m - 1 && prueba.getDate() === d;
+}
+
+// revisa un gasto completo. Devuelve el error o null si todo está bien.
+function revisarGasto(g){
+  if (!Number.isInteger(g.centavos) || g.centavos <= 0) return 'monto inválido';
+  if (!RE_CAT.test(g.categoria))                        return 'categoría desconocida';
+  if (!fechaValida(g.fecha))                            return 'fecha inválida';
+  if (!RE_DESC.test(g.descripcion))                     return 'descripción con caracteres no permitidos';
+  return null;
+}
+
+/*  Los datos y su persistencia */
+let gastos = cargar();      // la lista completa
+let categoria = null;       // categoría elegida en el formulario
+let filtroCat = null;       // categoría elegida en los filtros (null = todas)
+
+function guardar(){
+  try { localStorage.setItem('gastos', JSON.stringify(gastos)); } catch(e){}
+}
+function cargar(){
+  try { return JSON.parse(localStorage.getItem('gastos')) || []; } catch(e){ return []; }
+}
+
+// Exportar: arma un archivo .json y lo descarga
+function exportar(){
+  const texto = JSON.stringify(gastos, null, 2);
+  const enlace = document.createElement('a');
+  enlace.href = URL.createObjectURL(new Blob([texto], {type:'application/json'}));
+  enlace.download = 'gastos-' + hoy() + '.json';
+  enlace.click();
+  URL.revokeObjectURL(enlace.href);
+}
+
+// Importar: lee el archivo que el usuario elige y valida cada registro
+function importar(archivo){
+  const lector = new FileReader();
+  lector.onload = () => {
+    let datos;
+    try { datos = JSON.parse(lector.result); }
+    catch(e){ aviso('El archivo no es un JSON válido.', false); return; }
+
+    if (!Array.isArray(datos)){ aviso('El archivo no contiene una lista de gastos.', false); return; }
+
+    const buenos = datos.filter(g => g && revisarGasto(g) === null);
+    if (buenos.length === 0){ aviso('El archivo no trae ningún gasto válido.', false); return; }
+
+    // no duplica: solo agrega los ids que aún no existen
+    const idsActuales = gastos.map(g => g.id);
+    const nuevos = buenos.filter(g => !idsActuales.includes(g.id));
+    gastos = gastos.concat(nuevos);
+    guardar();
+    mostrar();
+    aviso('Se importaron ' + nuevos.length + ' de ' + datos.length + ' registros.', true);
+  };
+  lector.readAsText(archivo);
+}
+
+/* Formato*/
+function pesos(centavos){
+  return '$' + (centavos / 100).toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function fechaBonita(texto){                  // "2026-08-05" -> "5 de agosto"
+  const [a, m, d] = texto.split('-');
+  return new Date(a, m - 1, d).toLocaleDateString('es-MX', {day:'numeric', month:'long'});
+}
+function hoy(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+/* Filtrar (punto 4.1)*/
+function filtrados(){
+  const desde = document.getElementById('desde').value;
+  const hasta = document.getElementById('hasta').value;
+  return gastos.filter(g =>
+    (!filtroCat || g.categoria === filtroCat) &&
+    (!desde || g.fecha >= desde) &&
+    (!hasta || g.fecha <= hasta)
+  );
+}
+
+/*  Dibujar en pantalla */
+const lista   = document.getElementById('lista');
+const grafica = document.getElementById('grafica');
+const hint    = document.getElementById('hint');
+
+function mostrar(){
+  const visibles = filtrados();
+
+  let total = 0;
+  for (const g of visibles) total += g.centavos;
+  document.getElementById('total').textContent = pesos(total);
+  document.getElementById('contador').textContent = visibles.length + (visibles.length === 1 ? ' movimiento' : ' movimientos');
+
+  dibujarGrafica(visibles, total);
+  dibujarHistorial(visibles);
+}
+
+function dibujarGrafica(visibles, total){
+  if (total === 0){
+    grafica.innerHTML = '<div class="empty"><p>Nada que graficar.</p><small>Registra un gasto o amplía los filtros.</small></div>';
+    return;
+  }
+
+  // suma por categoría
+  const suma = {};
+  for (const g of visibles) suma[g.categoria] = (suma[g.categoria] || 0) + g.centavos;
+
+  const orden = Object.keys(suma).sort((a, b) => suma[b] - suma[a]);
+  const mayor = suma[orden[0]];
+
+  grafica.innerHTML = orden.map(cat => {
+    const ancho = Math.round(suma[cat] / mayor * 100);
+    const parte = Math.round(suma[cat] / total * 100);
+    return `
+      <div class="barra-fila">
+        <div class="et">${dibujo(CATEGORIAS[cat].icono)}${CATEGORIAS[cat].texto}</div>
+        <div class="pista"><div class="barra" style="width:${ancho}%"></div></div>
+        <div class="val num">${pesos(suma[cat])}<small>${parte}%</small></div>
+      </div>`;
+  }).join('');
+}
+
+function dibujarHistorial(visibles){
+  if (visibles.length === 0){
+    lista.innerHTML = '<div class="empty"><p>No hay movimientos que mostrar.</p><small>Registra tu primer gasto o limpia los filtros.</small></div>';
+    return;
+  }
+  const orden = [...visibles].sort((a, b) => b.fecha.localeCompare(a.fecha) || b.id - a.id);
+  lista.innerHTML = orden.map(g => `
+    <div class="item">
+      <div class="ico">${dibujo(CATEGORIAS[g.categoria].icono)}</div>
+      <div class="meta">
+        <strong>${g.descripcion || CATEGORIAS[g.categoria].texto}</strong>
+        <small>${CATEGORIAS[g.categoria].texto} · ${fechaBonita(g.fecha)}</small>
+      </div>
+      <div class="amt num">${pesos(g.centavos)}</div>
+      <button class="del" data-id="${g.id}" aria-label="Eliminar gasto">${dibujo(BASURA)}</button>
+    </div>`).join('');
+}
+
+function aviso(texto, exito){
+  hint.textContent = texto;
+  hint.classList.toggle('ok', !!exito);
+}
+
+/* Botones de categoría (formulario y filtros) */
+function pintarChips(contenedor, seleccion, alHacerClic, conTodas){
+  const llaves = Object.keys(CATEGORIAS);
+  const botones = llaves.map(c =>
+    `<button type="button" class="chip" data-cat="${c}" aria-pressed="${seleccion === c}">${dibujo(CATEGORIAS[c].icono)}${CATEGORIAS[c].texto}</button>`
+  );
+  if (conTodas) botones.unshift(`<button type="button" class="chip" data-cat="" aria-pressed="${seleccion === null}">Todas</button>`);
+  contenedor.innerHTML = botones.join('');
+  contenedor.querySelectorAll('.chip').forEach(b => {
+    b.addEventListener('click', () => alHacerClic(b.dataset.cat || null));
+  });
+}
+
+const chipsForm   = document.getElementById('chips-form');
+const chipsFiltro = document.getElementById('chips-filtro');
+
+function elegirCategoria(cat){
+  categoria = cat;
+  pintarChips(chipsForm, categoria, elegirCategoria, false);
+  aviso('', false);
+}
+function elegirFiltro(cat){
+  filtroCat = cat;
+  pintarChips(chipsFiltro, filtroCat, elegirFiltro, true);
+  mostrar();
+}
+
+/* Agregar y eliminar */
+document.getElementById('form').addEventListener('submit', evento => {
+  evento.preventDefault();
+
+  const monto = limpiarMonto(document.getElementById('monto').value);
+  if (!RE_MONTO.test(monto)){ aviso('Escribe un monto válido, por ejemplo 250.50', false); return; }
+  if (Number(monto) <= 0)   { aviso('El monto debe ser mayor a cero.', false); return; }
+  if (!categoria)           { aviso('Elige una categoría.', false); return; }
+
+  const gasto = {
+    id: Date.now(),
+    centavos: Math.round(Number(monto) * 100),
+    categoria: categoria,
+    fecha: document.getElementById('fecha').value || hoy(),
+    descripcion: document.getElementById('desc').value.trim()
+  };
+
+  const error = revisarGasto(gasto);
+  if (error){ aviso('No se pudo guardar: ' + error + '.', false); return; }
+
+  gastos.push(gasto);
+  guardar();
+  mostrar();
+
+  aviso('', false);
+  document.getElementById('monto').value = '';
+  document.getElementById('desc').value = '';
+  document.getElementById('monto').focus();
+});
+
+lista.addEventListener('click', evento => {
+  const boton = evento.target.closest('.del');
+  if (!boton) return;
+  gastos = gastos.filter(g => String(g.id) !== boton.dataset.id);
+  guardar();
+  mostrar();
+});
+
+/* Botones de archivo y de filtros*/
+document.getElementById('btn-exportar').addEventListener('click', exportar);
+document.getElementById('btn-importar').addEventListener('click', () => document.getElementById('archivo').click());
+document.getElementById('archivo').addEventListener('change', evento => {
+  if (evento.target.files[0]) importar(evento.target.files[0]);
+  evento.target.value = '';   // permite volver a elegir el mismo archivo
+});
+document.getElementById('desde').addEventListener('change', mostrar);
+document.getElementById('hasta').addEventListener('change', mostrar);
+document.getElementById('btn-limpiar').addEventListener('click', () => {
+  document.getElementById('desde').value = '';
+  document.getElementById('hasta').value = '';
+  elegirFiltro(null);
+});
+
+/*  Pruebas */
+function pruebas(){
+  const casos = [
+    ['monto entero',            RE_MONTO.test('250'),                        true],
+    ['monto con 2 decimales',   RE_MONTO.test('250.50'),                     true],
+    ['monto con 3 decimales',   RE_MONTO.test('250.505'),                    false],
+    ['monto con letras',        RE_MONTO.test('250pesos'),                   false],
+    ['monto vacío',             RE_MONTO.test(''),                           false],
+    ['limpia comas y espacios', limpiarMonto(' 1,250.50 '),                  '1250.50'],
+    ['fecha correcta',          fechaValida('2026-08-18'),                   true],
+    ['fecha 31 de febrero',     fechaValida('2026-02-31'),                   false],
+    ['fecha en otro formato',   fechaValida('18/08/2026'),                   false],
+    ['descripción normal',      RE_DESC.test('Comida con el equipo'),        true],
+    ['descripción con HTML',    RE_DESC.test('<script>alert(1)<\/script>'),   false],
+    ['categoría válida',        RE_CAT.test('renta'),                        true],
+    ['categoría inventada',     RE_CAT.test('viajes'),                       false],
+    ['redondeo a centavos',     Math.round(19.99 * 100),                     1999],
+    ['suma exacta en centavos', (Math.round(0.1*100) + Math.round(0.2*100)) / 100, 0.3],
+    ['gasto válido',            revisarGasto({centavos:1000, categoria:'comida', fecha:'2026-08-18', descripcion:'Tacos'}), null],
+    ['gasto con monto cero',    revisarGasto({centavos:0, categoria:'comida', fecha:'2026-08-18', descripcion:''}) !== null, true],
+    ['fechas ordenan como texto', '2026-08-05' < '2026-08-12',               true]
+  ];
+
+  let ok = 0;
+  console.log('%cPruebas de la app de gastos', 'font-weight:bold');
+  for (const [nombre, obtenido, esperado] of casos){
+    const pasa = obtenido === esperado;
+    if (pasa) ok++;
+    console.log((pasa ? '✅' : '❌') + ' ' + nombre + '  →  obtenido: ' + JSON.stringify(obtenido) + '  esperado: ' + JSON.stringify(esperado));
+  }
+  console.log('Resultado: ' + ok + ' de ' + casos.length + ' pruebas pasaron.');
+  return ok + '/' + casos.length;
+}
+
+/* Arranque */
+document.getElementById('fecha').value = hoy();
+pintarChips(chipsForm, null, elegirCategoria, false);
+pintarChips(chipsFiltro, null, elegirFiltro, true);
+mostrar();
+</script>
+</body>
+</html>
